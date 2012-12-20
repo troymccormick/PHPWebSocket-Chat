@@ -35,7 +35,9 @@ class PHPWebSocket
 	// the maximum length, in bytes, of a message's payload data, this is also internally limited to 2,147,483,647
 	const WS_MAX_MESSAGE_PAYLOAD_RECV = 500000;
 
-
+	// check the Origin header matches a designated URL
+	const WS_ORIGIN_CHECK = true;
+	const WS_ORIGIN_URL = 'http://localhost/';
 
 
 	// internal
@@ -608,8 +610,16 @@ class PHPWebSocket
 		for ($i=1; $i<$headersCount; $i++) {
 			$parts = explode(':', $headers[$i]);
 			if (!isset($parts[1])) return false;
-
-			$headersKeyed[trim($parts[0])] = trim($parts[1]);
+			if ($parts[0] == 'Origin') {
+				$headersKeyed[trim($parts[0])] = str_replace('Origin: ', '', trim($headers[$i]));
+			} else {
+				$headersKeyed[trim($parts[0])] = trim($parts[1]);
+			}
+		}
+		
+		// check Origin matches, if requested to do so
+		if (self::WS_ORIGIN_CHECK) {
+			if ($headersKeyed['Origin'] != self::WS_ORIGIN_URL) return false;
 		}
 
 		// check Host header was received
